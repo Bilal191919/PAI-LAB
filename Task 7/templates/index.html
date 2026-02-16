@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Joke App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fce4ec;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #d81b60;
+        }
+        .joke-box {
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 20px;
+            border-left: 5px solid #d81b60;
+            background-color: #fff3e0;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #d81b60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #ad1457;
+        }
+        .setup {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .punchline {
+            font-style: italic;
+            color: #555;
+            margin-top: 10px;
+            display: block;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>😂 Random Joke Generator</h1>
+        <p>Need a laugh? Click the button below!</p>
+
+        {% if joke %}
+            <div class="joke-box">
+                <div class="setup">{{ joke.setup }}</div>
+                <span class="punchline">... {{ joke.punchline }} 🤣</span>
+            </div>
+        {% elif error %}
+            <div class="error">
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            <div class="joke-box" style="background-color: transparent; border: none;">
+                <p>No joke loaded yet.</p>
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            <button type="submit">Get Another Joke</button>
+        </form>
+    </div>
+
+</body>
+</html>
