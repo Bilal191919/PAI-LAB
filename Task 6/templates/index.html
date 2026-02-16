@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection (Task 6)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .video-box {
+            border: 5px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+            display: inline-block;
+        }
+        img {
+            max-width: 100%;
+            display: block;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task 6: Real-time Face Detection</h1>
+        <p>This application uses OpenCV and Flask to detect faces from your webcam feed.</p>
+        
+        <div class="video-box">
+            <!-- The video feed comes from the Flask route /video_feed -->
+            <img src="{{ url_for('video_feed') }}" alt="Video Feed">
+        </div>
+
+        <div class="controls">
+            <button onclick="window.location.reload()">Refresh Feed</button>
+        </div>
+        
+        <div class="status">
+            Faces Detected: <span id="count">Analyzing...</span>
+        </div>
+    </div>
+</body>
+</html>
