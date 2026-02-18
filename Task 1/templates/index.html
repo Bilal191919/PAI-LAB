@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraper Project - Semester 4</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 50px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header-title {
+            color: #0d6efd;
+            font-weight: bold;
+        }
+        #loadingArea {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        #resultsArea {
+            display: none;
+        }
+        .email-text {
+            color: green;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Web Contact Scanner</span>
+            <span class="text-light" style="font-size: 0.8rem;">Final Assignment</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                Upload URL List
+            </div>
+            <div class="card-body">
+                <p class="card-text">Please upload your Excel (.xlsx) or CSV file containing website URLs.</p>
+                
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <input class="form-control" type="file" id="fileInput" required accept=".xlsx, .csv">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="processBtn">Start Scanning</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.reload()">Reset</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="alertBox" class="alert" role="alert" style="display: none;"></div>
+
+        <div id="loadingArea">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Processing websites... Please wait.</p>
+        </div>
+
+        <div class="card" id="resultsArea">
+            <div class="card-header bg-success text-white">
+                Scraping Results
+            </div>
+            <div class="card-body">
+                
+                <div class="row text-center mb-4">
+                    <div class="col-4">
+                        <h5>Total URLs</h5>
+                        <span id="statTotal" class="h4">0</span>
+                    </div>
+                    <div class="col-4">
+                        <h5>Found Emails</h5>
+                        <span id="statEmails" class="h4">0</span>
+                    </div>
+                    <div class="col-4">
+                        <h5>Success Rate</h5>
+                        <span id="statSuccess" class="h4">0</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                    <button class="btn btn-outline-success" id="downloadBtn">Download Excel Report</button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Website</th>
+                                <th>Status</th>
+                                <th>Email Found</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Variables setup
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const loadingArea = document.getElementById('loadingArea');
+        const resultsArea = document.getElementById('resultsArea');
+        const alertBox = document.getElementById('alertBox');
+        
+        let scrapedData = []; // Store data for download
+
+        // Form Submit hone par ye function chalega
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault(); // Page refresh hone se roko
+
+            if(fileInput.files.length === 0) {
+                showAlert('Please select a file first!', 'danger');
+                return;
+            }
+
+            // UI Update
+            processBtn.disabled = true;
+            processBtn.innerText = "Scanning...";
+            loadingArea.style.display = 'block';
+            resultsArea.style.display = 'none';
+            alertBox.style.display = 'none';
+
+            // Backend ko file bhejo
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/process-excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    scrapedData = data.results;
+                    showResults(data);
+                    showAlert('Scanning complete successfully!', 'success');
+                } else {
+                    showAlert('Error: ' + data.error, 'danger');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Something went wrong. Check console.', 'danger');
+            } finally {
+                // Reset UI
+                loadingArea.style.display = 'none';
+                processBtn.disabled = false;
+                processBtn.innerText = "Start Scanning";
+            }
+        });
+
+        // Results table show karne ka function
+        function showResults(data) {
+            // Stats update
+            document.getElementById('statTotal').innerText = data.total_urls;
+            document.getElementById('statEmails').innerText = data.total_emails;
+            document.getElementById('statSuccess').innerText = data.successful;
+
+            // Table update
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = ''; // Clear old data
+
+            data.results.forEach(item => {
+                let statusBadge = item.email_count > 0 
+                    ? '<span class="badge bg-success">Success</span>' 
+                    : '<span class="badge bg-secondary">Empty</span>';
+                
+                let emailsHtml = item.emails.length > 0 
+                    ? `<span class="email-text">${item.emails.join(', ')}</span>` 
+                    : '<span class="text-muted">No emails found</span>';
+
+                let row = `
+                    <tr>
+                        <td><a href="${item.base_url}" target="_blank">${item.base_url}</a></td>
+                        <td>${statusBadge}</td>
+                        <td>${emailsHtml}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            resultsArea.style.display = 'block';
+        }
+
+        // Alert show karne ka helper function
+        function showAlert(msg, type) {
+            alertBox.className = `alert alert-${type}`;
+            alertBox.innerText = msg;
+            alertBox.style.display = 'block';
+        }
+
+        // Download Button Logic
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            if(scrapedData.length === 0) return;
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ results: scrapedData })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'My_Assignment_Results.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else {
+                    alert("Download failed!");
+                }
+            } catch (err) {
+                console.log(err);
+                alert("Error during download");
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
